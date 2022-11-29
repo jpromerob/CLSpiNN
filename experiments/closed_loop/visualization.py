@@ -24,10 +24,11 @@ LINE = "________________________________________"
 
 class Oscilloscope:
     
-    def __init__(self, labels, output_q, end_of_sim):
+    def __init__(self, args, labels, output_q, end_of_sim):
         self.fig = []
         self.axs = []
         self.t = []
+        self.gui = args.gui
         self.line_plt_ud = LINE
         self.line_plt_lr = LINE
         self.labels = labels
@@ -35,7 +36,10 @@ class Oscilloscope:
         self.spike_q = multiprocessing.Queue()
         self.output_q = output_q
         self.end_of_sim = end_of_sim
-        self.p_visual = multiprocessing.Process(target=self.animation, args=())
+        if self.gui == 1:
+            self.p_visual = multiprocessing.Process(target=self.animation, args=())
+        else:
+            self.p_visual = multiprocessing.Process(target=self.cmdline, args=())
         self.p_o_data = multiprocessing.Process(target=self.get_outputs, args=())
     
     def __enter__(self):
@@ -86,9 +90,8 @@ class Oscilloscope:
 
             time.sleep(0.005)
 
-    def rt_plot(self, i, mn, spike_count):
-        
-        
+    def get_counts(self,spike_count):
+
         while not self.spike_q.empty():
             spike_count = self.spike_q.get(False)
             
@@ -103,8 +106,12 @@ class Oscilloscope:
                 self.line_plt_ud = self.line_plt_ud[1:]+"_"
 
             print(self.line_plt_ud+"\t\t\t"+self.line_plt_lr+"\r", end = '')
-           
-                
+        
+        return spike_count
+
+    def rt_plot(self, i, mn, spike_count):
+        
+        spike_count = self.get_counts(spike_count)                
 
         # Add x and y to lists
         self.t.append(time.time())
@@ -131,6 +138,13 @@ class Oscilloscope:
                 plt.savefig('EndOfSim.png')
                 plt.close(self.fig)
     
+    def cmdline(self):
+
+        spike_count = -NB_PTS*np.ones((self.n,))
+        while(True):            
+            spike_count = self.get_counts(spike_count) 
+            time.sleep(0.001)
+
     def animation(self):
 
         print("Starting Oscilloscope")
