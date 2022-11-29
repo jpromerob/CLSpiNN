@@ -20,6 +20,7 @@ matplotlib.rcParams['toolbar'] = 'None'
 
 
 NB_PTS = 100
+LINE = "________________________________________"
 
 class Oscilloscope:
     
@@ -27,6 +28,8 @@ class Oscilloscope:
         self.fig = []
         self.axs = []
         self.t = []
+        self.line_plt_ud = LINE
+        self.line_plt_lr = LINE
         self.labels = labels
         self.n = len(labels)
         self.spike_q = multiprocessing.Queue()
@@ -84,9 +87,24 @@ class Oscilloscope:
             time.sleep(0.005)
 
     def rt_plot(self, i, mn, spike_count):
-
+        
+        
         while not self.spike_q.empty():
             spike_count = self.spike_q.get(False)
+            
+            if int(spike_count[0])>10 and int(spike_count[1])<10:
+                self.line_plt_lr = self.line_plt_lr[1:]+"^"
+            if int(spike_count[0])<10 and int(spike_count[1])>10:
+                self.line_plt_lr = self.line_plt_lr[1:]+"_"
+
+            if int(spike_count[2])>10 and int(spike_count[3])<10:
+                self.line_plt_ud = self.line_plt_ud[1:]+"^"
+            if int(spike_count[2])<10 and int(spike_count[3])>10:
+                self.line_plt_ud = self.line_plt_ud[1:]+"_"
+
+            print(self.line_plt_ud+"\t\t\t"+self.line_plt_lr+"\r", end = '')
+           
+                
 
         # Add x and y to lists
         self.t.append(time.time())
